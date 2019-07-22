@@ -60,7 +60,7 @@ def _MPC(model):
     ax.set_ylabel('MPC')
     
     ax.axhline(par.MPC_PF,ls='--',lw=1,color=colors[0])
-    ax.text(0.25,1.1*par.MPC_PF,'analytical value in PIH') 
+    ax.text(0.25,1.1*par.MPC_PF,'PIH') 
 
     return fig,ax
 
@@ -109,7 +109,7 @@ def _MPCF(model,taus=[0,1,4,12],show_analytical=False):
         for i,tau in enumerate(taus):
             ax.axhline(par.MPCF_PF[tau],ls='--',lw=1,color=colors[i],label='')
         
-        ax.text(0.25,0.95*par.MPCF_PF[taus[-1]],'$\Leftarrow$analytical values in PIH',rotation=-90) 
+        ax.text(0.25,par.MPCF_PF[taus[-1]]-0.05,'$\Leftarrow$PIH',rotation=-90) 
 
     ax.legend(frameon=True)
 
@@ -177,12 +177,12 @@ def simulate(model,savefig=False,postfix=''):
     j = 0
     ax.plot(time,np.mean(c_before[j,:,:] >= 0.99*m_before[j,:,:],axis=1),
             ls='-',marker='o',markersize=4,color=colors[0],
-            label=f'before')
+            label=f'$\Delta = 0.00$')
 
     # after
     ax.plot(time,np.mean(c_after[j,:,:] >= 0.99*m_after[j,:,:],axis=1),
             ls='-',marker='o',markersize=4,color=colors[1],
-            label=f'after')
+            label=f'$\Delta = {delta0:.2f}$')
 
     ax.axvline(0,ls='--',lw=1,color='black')
     
