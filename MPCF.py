@@ -13,7 +13,7 @@ yaml.warnings({'YAMLLoadWarning': False})
 
 import time
 import numpy as np
-from numba import boolean, int32, double
+from numba import boolean, int64, double
 
 # consav package
 from consav import misc # various tools
@@ -61,29 +61,29 @@ class MPCFClass(ModelClass):
             ('R',double),
             ('G',double),
             ('sigma_psi',double),
-            ('Npsi',int32),
+            ('Npsi',int64),
             ('sigma_xi',double),
-            ('Nxi',int32),
+            ('Nxi',int64),
             ('pi',double),
             ('mu',double),
-            ('Ndelta',int32),
+            ('Ndelta',int64),
             ('grid_delta',double[:]),             
-            ('Nm',int32),
+            ('Nm',int64),
             ('m_mid',double),
             ('m_max',double),
             ('grid_m',double[:]),        
-            ('Na',int32),
+            ('Na',int64),
             ('a_mid',double),
             ('a_max',double),            
             ('grid_a',double[:]),        
-            ('Ntau',int32),        
+            ('Ntau',int64),        
             ('zeta',double),        
-            ('Nshocks',int32),        
+            ('Nshocks',int64),        
             ('psi',double[:]),        
             ('psi_w',double[:]),        
             ('xi',double[:]),        
             ('xi_w',double[:]),        
-            ('max_iter',int32),
+            ('max_iter',int64),
             ('tol',double),
             ('MPC_PF',double),
             ('MPCP_PF',double),
@@ -132,7 +132,7 @@ class MPCFClass(ModelClass):
 
         # returns and income
         self.par.R = 1.04**(1/12)
-        self.par.G = 1.02**(1/12)
+        self.par.G = 1.03**(1/12)
         self.par.sigma_psi = 0.02122033
         self.par.Npsi = 6
         self.par.sigma_xi = 0.30467480
@@ -142,7 +142,7 @@ class MPCFClass(ModelClass):
 
         # extra income        
         self.par.zeta = 1
-        self.par.Ntau = 24
+        self.par.Ntau = 12
         
         # grids (number of points)
         self.par.Ndelta = 50
@@ -174,23 +174,28 @@ class MPCFClass(ModelClass):
             self.par.grid_delta[1] = 1e-4
             self.par.grid_delta[2:] = misc.nonlinspace(2*1e-4,0.1,self.par.Ndelta-2,1.3)
             
+        m_min = 0
         if np.isnan(self.par.m_mid):
-            self.par.grid_m = misc.nonlinspace(0,self.par.m_max,self.par.Nm,1.2)
+            self.par.grid_m = misc.nonlinspace(m_min,self.par.m_max,self.par.Nm,1.2)
         else:
             Nm_base = self.par.Nm//2
             self.par.grid_m = np.zeros(self.par.Nm)
-            self.par.grid_m[:Nm_base] = misc.nonlinspace(0,self.par.m_mid,Nm_base,1.1)
+            self.par.grid_m[:Nm_base] = misc.nonlinspace(m_min,self.par.m_mid,Nm_base,1.1)
             self.par.grid_m[Nm_base-1:] = misc.nonlinspace(self.par.m_mid,self.par.m_max,self.par.Nm-Nm_base+1,1.1)
 
+        a_min = m_min+1e-6
         if np.isnan(self.par.a_mid):
-            self.par.grid_a = misc.nonlinspace(1e-6,self.par.a_max,self.par.Na,1.2)
+            self.par.grid_a = misc.nonlinspace(a_min,self.par.a_max,self.par.Na,1.2)
         else:
             Na_base = self.par.Na//2
             self.par.grid_a = np.zeros(self.par.Na)
-            self.par.grid_a[:Na_base] = misc.nonlinspace(1e-6,self.par.a_mid,Na_base,1.1)
+            self.par.grid_a[:Na_base] = misc.nonlinspace(a_min,self.par.a_mid,Na_base,1.1)
             self.par.grid_a[Na_base-1:] = misc.nonlinspace(self.par.a_mid,self.par.a_max,self.par.Na-Na_base+1,1.1)
 
         # b. shocks (qudrature nodes and weights using GaussHermite)
+        self.par.Nxi = 1 if self.par.sigma_xi == 0 else self.par.Nxi
+        self.par.Npsi = 1 if self.par.sigma_psi == 0 else self.par.Npsi
+
         shocks = misc.create_shocks(self.par.sigma_psi,self.par.Npsi,self.par.sigma_xi,self.par.Nxi,self.par.pi,self.par.mu)
         self.par.psi,self.par.psi_w,self.par.xi,self.par.xi_w,self.par.Nshocks = shocks
 
@@ -317,6 +322,10 @@ class MPCFClass(ModelClass):
             # b. solve bellman equation
             egm.solve_bellman(self.sol,self.par,itau)       
 
+    ############
+    # simulate #
+    ############
+    
     def simulate(self,simN,simT,m0s,tau0,delta0,seed=1917,postfix=''):
 
         # a. allocate
@@ -324,6 +333,8 @@ class MPCFClass(ModelClass):
         m = np.zeros(shape)
         delta = np.zeros(shape)
         c = np.zeros(shape)
+        P = np.zeros(shape)
+        C = np.zeros(shape)
 
         # b. draw random
         np.random.seed(1917)
@@ -331,7 +342,7 @@ class MPCFClass(ModelClass):
         xi = np.exp(np.random.normal(loc=-0.5*self.par.sigma_xi**2,scale=self.par.sigma_xi,size=(simT,simN)))
         
         # c. simulate
-        simulate.simulate(simT,self.par,self.sol,m,delta,c,m0s,tau0,delta0,psi,xi)
+        simulate.simulate(simT,self.par,self.sol,m,delta,c,P,C,m0s,tau0,delta0,psi,xi)
 
-        return delta,m,c
+        return m,c,C
      

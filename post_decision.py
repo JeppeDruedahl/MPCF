@@ -42,7 +42,6 @@ def compute_q(sol,par,t,t_plus):
             # ii. next-period cash-on-hand
             for ia in range(par.Na):
                 m_plus[ia] = par.R*par.grid_a[ia]/(psi*par.G) + xi
-                #m_plus[ia] += delta_plus
                 
             # iii. next-period consumption
             if par.Ndelta > 1:
