@@ -109,7 +109,7 @@ def _MPCF(model,taus=[0,1,4,12],show_analytical=False):
         for i,tau in enumerate(taus):
             ax.axhline(par.MPCF_PF[tau],ls='--',lw=1,color=colors[i],label='')
         
-        ax.text(0.25,par.MPCF_PF[taus[-1]]-0.05,'$\Leftarrow$PIH',rotation=-90) 
+        ax.text(0.25,par.MPCF_PF[taus[-1]]-0.15,'$\Leftarrow$PIH',rotation=-90) 
 
     ax.legend(frameon=True)
 
@@ -121,7 +121,8 @@ def MPCF(model,m_max=12,taus=[1,4,6,8],show_analytical=True,postfix='',savefig=F
     fig,ax = _MPCF(model,taus=taus,show_analytical=show_analytical)
     ax.set_xlim([0,m_max])
     ax.set_xticks(np.arange(0,m_max+1,1))
-
+    ax.set_ylim([0,1.3])
+    
     fig.tight_layout()
     if savefig: fig.savefig(f'figs/MPCF{postfix}.pdf')
 
@@ -129,6 +130,7 @@ def MPCF(model,m_max=12,taus=[1,4,6,8],show_analytical=True,postfix='',savefig=F
     fig,ax = _MPCF(model,taus=taus,show_analytical=True)
     ax.set_xscale('log')
     ax.set_xlim([0.1,model.par.grid_m[-1]])
+    ax.set_ylim([0,1.3])
 
     fig.tight_layout()
     if savefig: fig.savefig(f'figs/MPCF_convergence{postfix}.pdf')
