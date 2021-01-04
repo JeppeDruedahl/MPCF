@@ -109,7 +109,7 @@ def _MPCF(model,taus=[0,1,4,12],show_analytical=False):
         for i,tau in enumerate(taus):
             ax.axhline(par.MPCF_PF[tau],ls='--',lw=1,color=colors[i],label='')
         
-        ax.text(0.25,par.MPCF_PF[taus[-1]]-0.15,'$\Leftarrow$PIH',rotation=-90) 
+        ax.text(0.25,par.MPCF_PF[taus[-1]]-0.15,'PIH$\Rightarrow$',rotation=90) 
 
     ax.legend(frameon=True)
 
